@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "studens",
+  "info": {
+    "singularName": "studen",
+    "pluralName": "studens",
+    "displayName": "studen"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 20,
+      "required": true,
+      "unique": true
+    },
+    "mobile": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 10,
+      "required": true,
+      "unique": true
+    },
+    "cadeID": {
+      "type": "string",
+      "minLength": 13,
+      "maxLength": 13,
+      "required": true,
+      "unique": true
+    }
+  }
+}

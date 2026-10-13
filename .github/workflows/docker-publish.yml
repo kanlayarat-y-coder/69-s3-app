@@ -25,6 +25,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify GHCR_TOKEN secret
+        run: |
+          if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
+            echo "::error::ไม่พบ secret ชื่อ GHCR_TOKEN (หรือตั้งเป็น Variable แทน Secret)"
+            echo "ให้เพิ่มที่: Settings > Secrets and variables > Actions > Secrets > New repository secret"
+            echo "และ PAT ต้องเป็น classic token ของบัญชี kanlayarat + scope write:packages"
+            exit 1
+          fi
+          echo "พบ secret GHCR_TOKEN แล้ว"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

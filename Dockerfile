@@ -23,7 +23,8 @@ COPY . .
 ENV NODE_ENV=production
 RUN npm run build \
     && npm prune --omit=dev \
-    && npm cache clean --force
+    && npm cache clean --force \
+    && mkdir -p /app/.tmp /app/public/uploads
 
 ########################################
 # Stage 2 — Runtime (image จริงที่รัน)
@@ -36,12 +37,9 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# คัดลอกแอป + node_modules (production) ที่ build แล้วจาก stage ก่อน
-COPY --from=build /app ./
-
-# เตรียมโฟลเดอร์ที่ต้องเขียนตอนรัน (sqlite / uploads) ให้ user node เขียนได้
-RUN mkdir -p /app/.tmp /app/public/uploads \
-    && chown -R node:node /app
+# คัดลอกแอป + node_modules (production) พร้อมกำหนดเจ้าของเป็น user node
+# ใช้ --chown เพื่อไม่ให้เกิด layer chown ซ้ำทั้งก้อน (ประหยัดทั้งเวลาและขนาด image)
+COPY --chown=node:node --from=build /app ./
 
 USER node
 

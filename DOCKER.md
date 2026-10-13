@@ -88,6 +88,15 @@ workflow `.github/workflows/docker-publish.yml` จะ build + push ให้ท
 หลัง push เข้า repo → แท็บ **Packages** → ถ้าจะให้คนอื่น pull ได้
 เข้า *Package settings* → เปลี่ยน visibility เป็น **Public**
 
+### แก้ปัญหา push ขึ้น GHCR ไม่ผ่าน
+
+| อาการ | สาเหตุ / วิธีแก้ |
+| --- | --- |
+| `denied: permission_denied: create_package` | PAT ไม่มีสิทธิ์สร้าง package ในชื่อ `kanlayarat` → ต้องเป็น **classic token** ของบัญชี **kanlayarat** และมี scope `write:packages` |
+| ตั้ง secret แล้วแต่ยังขึ้น permission | ตรวจว่าตั้งในช่อง **Secrets** ไม่ใช่ **Variables** และชื่อ secret ต้องเป็น `GHCR_TOKEN` ตรงตัว (case-sensitive) |
+| ใช้ fine-grained PAT | GitHub Packages ยังไม่รองรับ → ต้องสร้างเป็น **classic token** เท่านั้น |
+| workflow ไม่ fail เร็ว แต่ push ยังพัง | workflow มี step `Verify GHCR_TOKEN secret` ที่จะฟ้องทันทีถ้าไม่พบ secret |
+
 ---
 
 ## 5. หมายเหตุสำคัญ

@@ -35,6 +35,26 @@ jobs:
           fi
           echo "พบ secret GHCR_TOKEN แล้ว"
 
+      - name: Verify GHCR token owner & scope
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          owner=$(curl -s -H "Authorization: Bearer $GHCR_TOKEN" https://api.github.com/user | jq -r '.login // "unknown"')
+          scopes=$(curl -s -I -H "Authorization: Bearer $GHCR_TOKEN" https://api.github.com/user \
+                   | tr -d '\r' | awk -F': ' 'tolower($1)=="x-oauth-scopes"{print $2}')
+          echo "GHCR token owner  : $owner"
+          echo "GHCR token scopes : ${scopes:-<none / fine-grained token>}"
+          if [ "$owner" != "kanlayarat" ]; then
+            echo "::error::PAT (GHCR_TOKEN) อยู่ภายใต้บัญชี '$owner' แต่ปลายทางคือ namespace 'kanlayarat'"
+            echo "::error::ให้สร้าง classic PAT ขณะ login เป็นบัญชี kanlayarat (scope: write:packages) แล้วอัปเดต secret GHCR_TOKEN"
+            exit 1
+          fi
+          if ! echo ",$scopes," | grep -q ",write:packages,"; then
+            echo "::error::PAT (GHCR_TOKEN) ไม่มี scope write:packages (หรือเป็น fine-grained ซึ่ง GitHub Packages ไม่รองรับ)"
+            exit 1
+          fi
+          echo "GHCR token OK: owner=kanlayarat, write:packages present"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

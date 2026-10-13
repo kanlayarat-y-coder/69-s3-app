@@ -69,11 +69,21 @@ docker run --rm -p 1337:1337 --env-file .env `
 
 workflow `.github/workflows/docker-publish.yml` จะ build + push ให้ทุกครั้งที่:
 
-- push เข้า branch `main` / `master` → tag `latest`
+- push เข้า branch `main` / `master` / `develop` → tag `latest` (default branch) + tag ชื่อ branch
 - push tag เช่น `v1.0.0` → tag `v1.0.0`
 - กด *Run workflow* เอง
 
-ไม่ต้องตั้ง secret เพิ่ม เพราะใช้ `GITHUB_TOKEN` (workflow ขอสิทธิ์ `packages: write` ไว้แล้ว)
+### ต้องตั้ง secret (สำคัญ)
+
+เพราะปลายทางเป็น `ghcr.io/kanlayarat/69-s3-app` แต่ repo อยู่ใต้เจ้าของอื่น →
+`GITHUB_TOKEN` push ข้าม namespace ไม่ได้ ต้องใช้ PAT
+
+1. สร้าง PAT (classic) ของบัญชี **kanlayarat** → scope `write:packages`, `read:packages`
+2. repo → **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `GHCR_TOKEN`
+   - Value: PAT ที่สร้าง
+3. workflow จะใช้ `secrets.GHCR_TOKEN` เป็น password (ถ้าไม่ตั้งจะ fallback เป็น `GITHUB_TOKEN`
+   ซึ่งจะ push ไม่ผ่านเพราะคนละ namespace)
 
 หลัง push เข้า repo → แท็บ **Packages** → ถ้าจะให้คนอื่น pull ได้
 เข้า *Package settings* → เปลี่ยน visibility เป็น **Public**

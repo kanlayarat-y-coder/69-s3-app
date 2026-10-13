@@ -2,14 +2,17 @@ name: Build & Push Docker image (GHCR)
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, develop]
     tags: ["v*"]
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  # github.repository = "owner/repo" (ต้องเป็นตัวพิมพ์เล็กทั้งหมด ไม่งั้น push ไม่ผ่าน)
-  IMAGE_NAME: ${{ github.repository }}
+  # ปลายทางที่ต้องการ: ghcr.io/kanlayarat/69-s3-app
+  # หมายเหตุ: GITHUB_TOKEN push ข้าม namespace ไม่ได้
+  #           ต้องตั้ง repo secret ชื่อ GHCR_TOKEN = PAT ของบัญชี kanlayarat (scope: write:packages)
+  #           ถ้าไม่ได้ตั้ง จะ fallback ไปใช้ GITHUB_TOKEN (push ได้แค่ namespace ของ repo เอง)
+  IMAGE_NAME: kanlayarat/69-s3-app
 
 jobs:
   build-and-push:
@@ -29,8 +32,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: kanlayarat
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels)
         id: meta

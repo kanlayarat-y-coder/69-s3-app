@@ -1,0 +1,25 @@
+# Dependencies (ติดตั้งใหม่ใน image)
+node_modules
+
+# Build artifacts (สร้างใหม่ระหว่าง build ใน image)
+dist
+build
+.strapi
+.tmp
+
+# Secrets — ห้าม bake ลง image
+.env
+.env.*
+
+# VCS / CI / Docker files เอง
+.git
+.gitignore
+.github
+Dockerfile
+.dockerignore
+
+# เอกสาร / log / อื่น ๆ ที่ไม่ต้องใช้ตอนรัน
+*.md
+*.log
+npm-debug.log*
+coverage

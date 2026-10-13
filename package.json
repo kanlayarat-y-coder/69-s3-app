@@ -5,6 +5,7 @@
   "description": "A Strapi application",
   "scripts": {
     "build": "strapi build",
+    "build:image:push": "docker buildx build --platform linux/amd64,linux/arm64 --provenance=false -t ghcr.io/kanlayarat/69-s3-app:latest --push .",
     "console": "strapi console",
     "deploy": "strapi deploy",
     "dev": "strapi develop",

@@ -1,7 +1,7 @@
 # 🐳 Build & Publish Docker Image ขึ้น GitHub Packages (GHCR)
 
 คู่มือ build โปรเจกต์ Strapi นี้เป็น Docker image แล้ว push ขึ้น
-**GitHub Container Registry → `ghcr.io/kanlayarat/69-s3-app`**
+**GitHub Container Registry → `ghcr.io/kanlayarat-y-coder/69-s3-app`**
 
 | ไฟล์ | หน้าที่ |
 | --- | --- |
@@ -21,13 +21,17 @@
    docker buildx create --name multiarch --driver docker-container --bootstrap --use
    ```
 
-3. **Login GHCR** — สร้าง PAT (classic) ที่ https://github.com/settings/tokens
-   scope: `write:packages`, `read:packages`, `repo`
+3. **Login GHCR** (สำหรับ push จากเครื่องเองเท่านั้น) — สร้าง PAT (classic) ของบัญชี
+   **`kanlayarat-y-coder`** ที่ https://github.com/settings/tokens
+   scope: `write:packages`, `read:packages`
 
    ```powershell
    $env:CR_PAT="<วาง_TOKEN_ตรงนี้>"
-   $env:CR_PAT | docker login ghcr.io -u kanlayarat --password-stdin
+   $env:CR_PAT | docker login ghcr.io -u kanlayarat-y-coder --password-stdin
    ```
+
+   > CI (GitHub Actions) **ไม่ต้องใช้ PAT** เพราะ push เข้า namespace เจ้าของ repo
+   > ใช้ `GITHUB_TOKEN` อัตโนมัติได้เลย
 
 ---
 
@@ -43,7 +47,7 @@ script นี้เทียบเท่ากับ:
 docker buildx build `
   --platform linux/amd64,linux/arm64 `
   --provenance=false `
-  -t ghcr.io/kanlayarat/69-s3-app:latest `
+  -t ghcr.io/kanlayarat-y-coder/69-s3-app:latest `
   --push .
 ```
 
@@ -58,7 +62,7 @@ docker buildx build `
 docker run --rm -p 1337:1337 --env-file .env `
   -v strapi-data:/app/.tmp `
   -v strapi-uploads:/app/public/uploads `
-  ghcr.io/kanlayarat/69-s3-app:latest
+  ghcr.io/kanlayarat-y-coder/69-s3-app:latest
 ```
 
 เปิด http://localhost:1337/admin
@@ -73,17 +77,11 @@ workflow `.github/workflows/docker-publish.yml` จะ build + push ให้ท
 - push tag เช่น `v1.0.0` → tag `v1.0.0`
 - กด *Run workflow* เอง
 
-### ต้องตั้ง secret (สำคัญ)
+### ไม่ต้องตั้ง secret
 
-เพราะปลายทางเป็น `ghcr.io/kanlayarat/69-s3-app` แต่ repo อยู่ใต้เจ้าของอื่น →
-`GITHUB_TOKEN` push ข้าม namespace ไม่ได้ ต้องใช้ PAT
-
-1. สร้าง PAT (classic) ของบัญชี **kanlayarat** → scope `write:packages`, `read:packages`
-2. repo → **Settings → Secrets and variables → Actions → New repository secret**
-   - Name: `GHCR_TOKEN`
-   - Value: PAT ที่สร้าง
-3. workflow จะใช้ `secrets.GHCR_TOKEN` เป็น password (ถ้าไม่ตั้งจะ fallback เป็น `GITHUB_TOKEN`
-   ซึ่งจะ push ไม่ผ่านเพราะคนละ namespace)
+ปลายทาง `ghcr.io/kanlayarat-y-coder/69-s3-app` อยู่ namespace เดียวกับเจ้าของ repo
+→ workflow ใช้ `GITHUB_TOKEN` (สิทธิ์ `packages: write` ที่ตั้งไว้ใน workflow) push ได้เลย
+ไม่ต้องสร้าง PAT หรือ secret ใด ๆ เพิ่ม
 
 หลัง push เข้า repo → แท็บ **Packages** → ถ้าจะให้คนอื่น pull ได้
 เข้า *Package settings* → เปลี่ยน visibility เป็น **Public**
@@ -92,10 +90,9 @@ workflow `.github/workflows/docker-publish.yml` จะ build + push ให้ท
 
 | อาการ | สาเหตุ / วิธีแก้ |
 | --- | --- |
-| `denied: permission_denied: create_package` | PAT ไม่มีสิทธิ์สร้าง package ในชื่อ `kanlayarat` → ต้องเป็น **classic token** ของบัญชี **kanlayarat** และมี scope `write:packages` |
-| ตั้ง secret แล้วแต่ยังขึ้น permission | ตรวจว่าตั้งในช่อง **Secrets** ไม่ใช่ **Variables** และชื่อ secret ต้องเป็น `GHCR_TOKEN` ตรงตัว (case-sensitive) |
-| ใช้ fine-grained PAT | GitHub Packages ยังไม่รองรับ → ต้องสร้างเป็น **classic token** เท่านั้น |
-| workflow ไม่ fail เร็ว แต่ push ยังพัง | workflow มี step `Verify GHCR_TOKEN secret` ที่จะฟ้องทันทีถ้าไม่พบ secret |
+| `denied: permission_denied` | token ที่ใช้ไม่มีสิทธิ์ใน namespace ปลายทาง → ตรวจว่า `IMAGE_NAME` เป็น `kanlayarat-y-coder/69-s3-app` และ workflow มี `permissions: packages: write` |
+| push จากเครื่องไม่ผ่าน | ต้อง `docker login ghcr.io -u kanlayarat-y-coder` ด้วย **classic PAT** scope `write:packages` (fine-grained ใช้กับ Packages ไม่ได้) |
+| ขึ้น `unauthorized` | PAT หมดอายุ/พิมพ์ผิด หรือ login คนละบัญชีกับเจ้าของ namespace |
 
 ---
 
